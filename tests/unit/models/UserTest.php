@@ -3,42 +3,62 @@
 namespace tests\models;
 
 use app\models\User;
+use Yii;
 
 class UserTest extends \Codeception\Test\Unit
 {
-    public function testFindUserById()
+    public function testUserValidation()
     {
-        expect_that($user = User::findIdentity(100));
-        expect($user->username)->equals('admin');
+        $userData = [
+            "email" => "test@email.io",
+            "name" => "John Doe",
+            "language" => "en_GB",
+            "password" => "qazwsx!123",
+        ];
 
-        expect_not(User::findIdentity(999));
+        $userData2 = [
+            "email" => "test@email.me",
+            "name" => "John Doe 2",
+            "language" => "en_US",
+        ];
+
+        $user = new User(['scenario' => User::CREATE_SCENARIO]);
+
+        $user->setAttributes($userData);
+
+        $this->assertTrue($user->validate());
+
+        $user = new User(['scenario' => User::CREATE_SCENARIO]);
+        $user->setAttributes($userData2);
+        $this->assertFalse($user->validate());
+        $this->assertTrue(array_key_exists('password', $user->errors));
+
+        $user = new User(['scenario' => User::UPDATE_SCENARIO]);
+        $user->setAttributes($userData2);
+        $this->assertTrue($user->validate());
+
+        $user = new User(['scenario' => User::UPDATE_PASSWORD_SCENARIO]);
+        $user->setAttributes(['password' => '']);
+        $this->assertFalse($user->validate());
+        $this->assertTrue(array_key_exists('password', $user->errors));
     }
 
-    public function testFindUserByAccessToken()
+    public function testUserSaving()
     {
-        expect_that($user = User::findIdentityByAccessToken('100-token'));
-        expect($user->username)->equals('admin');
+        $userData = [
+            "email" => "test@email.io",
+            "name" => "John Doe",
+            "language" => "en_GB",
+            "password" => "qazwsx!123",
+        ];
 
-        expect_not(User::findIdentityByAccessToken('non-existing'));        
+        $user = new User(['scenario' => User::CREATE_SCENARIO]);
+        $user->setAttributes($userData);
+
+        $this->assertTrue($user->save());
+
+        $this->assertTrue(Yii::$app->getSecurity()->validatePassword($userData["password"], $user->passwdHash));
+
+        $this->assertEquals(1, $user->delete());
     }
-
-    public function testFindUserByUsername()
-    {
-        expect_that($user = User::findByUsername('admin'));
-        expect_not(User::findByUsername('not-admin'));
-    }
-
-    /**
-     * @depends testFindUserByUsername
-     */
-    public function testValidateUser($user)
-    {
-        $user = User::findByUsername('admin');
-        expect_that($user->validateAuthKey('test100key'));
-        expect_not($user->validateAuthKey('test102key'));
-
-        expect_that($user->validatePassword('admin'));
-        expect_not($user->validatePassword('123456'));        
-    }
-
 }

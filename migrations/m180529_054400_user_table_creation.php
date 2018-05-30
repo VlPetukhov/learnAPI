@@ -19,7 +19,7 @@ class m180529_054400_user_table_creation extends Migration
             [
                 "id"         => Schema::TYPE_PK,
                 "email"      => Schema::TYPE_STRING . " NOT NULL",
-                "passwdHash" => Schema::TYPE_STRING . "(40) NOT NULL",
+                "passwdHash" => Schema::TYPE_STRING . "(60) NOT NULL",
                 "name"       => Schema::TYPE_STRING . " DEFAULT \"\"",
                 "language"   => Schema::TYPE_STRING . "(6) ",
                 "created_at"    => Schema::TYPE_TIMESTAMP . " DEFAULT CURRENT_TIMESTAMP",
